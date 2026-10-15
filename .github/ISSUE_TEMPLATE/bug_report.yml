@@ -1,0 +1,33 @@
+name: Bug report
+description: Something looks wrong or doesn't work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please leave out local network addresses, passwords and Home Assistant tokens.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: input
+    id: plugin
+    attributes:
+      label: Plugin version
+      placeholder: "0.9.0"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Kiosk Satellite version
+      placeholder: "Echo Show 5, Kiosk Satellite 2026.10.23"
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshot or status line
+      description: A photo helps. The status line shows on the plugin's page in Kiosk Satellite. Remove anything personal first.

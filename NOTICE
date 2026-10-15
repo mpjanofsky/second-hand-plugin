@@ -1,0 +1,7 @@
+Second Hand
+Copyright 2026 Mike Janofsky
+
+This product started from the Kiosk Satellite "Hello World" plugin template
+(https://github.com/jxlarrea/kiosk-satellite-plugin-hello-world, Apache License 2.0, commit e2a3d9e).
+The build tools in tools/, the plugin interfaces in sdk/ and the release workflow in .github/workflows/
+come from or follow that template.

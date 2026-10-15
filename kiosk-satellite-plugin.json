@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "echo-wall-clock-plugin",
+  "name": "Second Hand",
+  "version": "0.9.0",
+  "apiVersion": 1,
+  "minAndroidSdk": 24,
+  "entryClass": "io.github.mpjanofsky.kiosk.secondhandplugin.SecondHandPlugin",
+  "description": "Second Hand shows your kiosk's own voice timers on a Bluetooth wall clock, and keeps the clock's time right.",
+  "author": "Mike Janofsky",
+  "license": "Apache-2.0",
+  "capabilities": [],
+  "settings": [
+    {
+      "key": "address",
+      "type": "string",
+      "title": "Clock address",
+      "default": "",
+      "description": "Filled in by Pair clock. Use Forget clock to pair another clock."
+    }
+  ],
+  "commands": [
+    {
+      "id": "pair",
+      "title": "Pair clock"
+    },
+    {
+      "id": "reconnect",
+      "title": "Reconnect to clock"
+    },
+    {
+      "id": "forget",
+      "title": "Forget clock"
+    }
+  ]
+}

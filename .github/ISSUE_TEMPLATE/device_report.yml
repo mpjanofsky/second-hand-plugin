@@ -1,0 +1,22 @@
+name: Device report
+description: Tell us how it works on your device
+labels: [device]
+body:
+  - type: input
+    id: device
+    attributes:
+      label: Device, screen size and Kiosk Satellite version
+      placeholder: "Fire HD 10, 1920x1200, Kiosk Satellite 2026.10.23"
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: How does it work?
+      options: [Works well, Mostly fine, Something looks wrong, Doesn't work]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes or a photo

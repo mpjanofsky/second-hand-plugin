@@ -1,0 +1,35 @@
+# Personal, never committed: device addresses, admin credentials (.local/LOCAL.md)
+.local/
+.env
+
+# Build output and local measurements
+private/perf/
+dist/
+build/
+__pycache__/
+*.pyc
+*.log
+
+# Screenshots and captures (they can show personal data; docs images are added deliberately)
+/*.jpg
+/*.jpeg
+/*.png
+/screenshot*
+*.pcap
+*.har
+
+# Signing material and keys
+*.pem
+*.p12
+.env.*
+*.jks
+*.keystore
+keystore.properties
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Claude Code per-user settings
+.claude/settings.local.json
