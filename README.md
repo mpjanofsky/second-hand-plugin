@@ -14,12 +14,17 @@ See what the clock shows without owning one: [try the clock simulator](https://m
 
 ## ✨ Features
 
-- ⏲️ **Voice timers on the clock:** say "set a timer for 10 minutes" to your kiosk and the clock shows it. Pause, resume, add time or cancel by voice and the clock follows.
-- 🔢 **Several timers at once:** run more than one timer and the clock shows them together (tested with four).
-- 🔔 **A pulse when time is up:** the clock pulses once when a timer ends, and stops when you stop the timer.
-- 🕐 **The right time:** Second Hand sets the clock's time and keeps it in sync with your kiosk, including time zone changes.
-- 🔁 **Looks after itself:** if the clock's batteries die or it goes out of range, it reconnects on its own.
-- 🔒 **Local only:** no account, no cloud, and nothing to change on the clock.
+⏲️ **Voice timers on the clock:** say "set a timer for 10 minutes" to your kiosk and the clock shows it. Pause, resume, add time or cancel by voice and the clock follows.
+
+🔢 **Several timers at once:** run more than one timer and the clock shows them together (tested with four).
+
+🔔 **A pulse when time is up:** the clock pulses once when a timer ends, and stops when you stop the timer.
+
+🕐 **The right time:** Second Hand sets the clock's time and keeps it in sync with your kiosk, including time zone changes.
+
+🔁 **Looks after itself:** if the clock's batteries die or it goes out of range, it reconnects on its own.
+
+🔒 **Local only:** no account, no cloud, and nothing to change on the clock.
 
 Second Hand follows the timers of **the kiosk it runs on**. One kiosk, one clock.
 
