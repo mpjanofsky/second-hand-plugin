@@ -6,7 +6,7 @@
 <img alt="Downloads" src="https://img.shields.io/github/downloads/mpjanofsky/second-hand-plugin/total">
 </p>
 
-# ⏱️ Second Hand
+# ⏱️ Second Hand Plugin for Kiosk Satellite
 
 Second Hand gives your Echo Wall Clock a second life. It connects the clock straight to your Kiosk Satellite kiosk, so the clock shows your kiosk's voice timers and keeps the right time, the way it does with an Echo. The clock needs no changes.
 
