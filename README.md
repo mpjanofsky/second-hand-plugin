@@ -1,14 +1,16 @@
 <p align="center"><img src="docs/banner.svg" alt="Second Hand: your Echo Wall Clock, without the Echo" width="720"></p>
 
 <p align="center">
-<a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/mpjanofsky/second-hand-plugin?style=flat"></a>
-<a href="https://github.com/mpjanofsky/second-hand-plugin/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/mpjanofsky/second-hand-plugin?style=flat"></a>
-<img alt="Downloads" src="https://img.shields.io/github/downloads/mpjanofsky/second-hand-plugin/total?style=flat">
+<a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/mpjanofsky/second-hand-plugin?style=for-the-badge"></a>
+<a href="https://github.com/mpjanofsky/second-hand-plugin/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/mpjanofsky/second-hand-plugin?style=for-the-badge"></a>
+<img alt="Downloads" src="https://img.shields.io/github/downloads/mpjanofsky/second-hand-plugin/total?style=for-the-badge">
 </p>
 
 # ⏱️ Second Hand Plugin for Kiosk Satellite
 
 Second Hand gives your Echo Wall Clock a second life. It connects the clock straight to your Kiosk Satellite kiosk, so the clock shows your kiosk's voice timers and keeps the right time, the way it does with an Echo. The clock needs no changes.
+
+See what the clock shows without owning one: [try the clock simulator](https://mpjanofsky.github.io/echo-wall-clock/) in your browser.
 
 ## ✨ Features
 
