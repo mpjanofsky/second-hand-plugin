@@ -32,7 +32,7 @@ Second Hand follows the timers of **the kiosk it runs on**. One kiosk, one clock
 
 | | |
 |---|---|
-| **You need** | An Echo Wall Clock, and a kiosk running Kiosk Satellite 2026.10.22 or newer with Bluetooth turned on and a Voice Satellite configured. |
+| **You need** | An Echo Wall Clock (the Mickey Mouse Edition is reported to work too: confirmed with Second Hand for Home Assistant, not yet tried with this plugin), and a kiosk running Kiosk Satellite 2026.10.22 or newer with Bluetooth turned on and a Voice Satellite configured. |
 | **Tested on** | An Echo Show 5 running LineageOS 18.1 (Android 11) |
 | **Should work on** | Other Kiosk Satellite kiosks with Bluetooth |
 

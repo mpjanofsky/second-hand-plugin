@@ -14,8 +14,20 @@ import android.os.Build;
  * prompt on the kiosk that someone must tap; the plugin cannot accept it. Blocking: run it off the callback threads.
  */
 final class Pairing {
-    /** The name the clock advertises starts with this; the rest varies per unit. */
-    static final String NAME_PREFIX = "EchoWallClk";
+    /** The name the clock advertises starts with one of these; the rest varies per unit. EWCMickeyMouse is the Mickey Mouse Edition. */
+    static final String[] NAME_PREFIXES = {"EchoWallClk", "EWCMickeyMouse"};
+
+    static boolean isClockName(String name) {
+        if (name == null) {
+            return false;
+        }
+        for (String prefix : NAME_PREFIXES) {
+            if (name.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     interface Progress {
         /** Shown on the plugin's status line and logged. */
@@ -50,7 +62,7 @@ final class Pairing {
     String run() throws InterruptedException {
         for (BluetoothDevice d : adapter.getBondedDevices()) {
             String name = d.getName();
-            if (name != null && name.startsWith(NAME_PREFIX)) {
+            if (isClockName(name)) {
                 progress.say("The clock is already paired.");
                 return d.getAddress();
             }
@@ -68,7 +80,7 @@ final class Pairing {
                         if (name == null) {
                             name = i.getStringExtra(BluetoothDevice.EXTRA_NAME);
                         }
-                        boolean byName = name != null && name.startsWith(NAME_PREFIX);
+                        boolean byName = isClockName(name);
                         boolean byAddress = !knownAddress.isEmpty() && knownAddress.equalsIgnoreCase(device.getAddress());
                         progress.log("discovered a device: " + (name == null ? "no name" : "named " + name)
                                 + (byName ? " (the clock, by name)" : byAddress ? " (the clock, by address)" : ""));
