@@ -13,7 +13,8 @@ grep -q "\"version\": \"$v\"" kiosk-satellite-plugin.json || { echo "kiosk-satel
 git rev-parse -q --verify "refs/tags/$tag" >/dev/null && { echo "tag $tag already exists" >&2; exit 1; }
 [ -z "$(git status --porcelain)" ] || { echo "working tree is not clean; commit or stash first" >&2; exit 1; }
 PUBLISH_CHECK=1 scripts/check.sh || { echo "check.sh failed; not releasing" >&2; exit 1; }
-zip="dist/$id-$v.zip"
+dist=$(python3 -c 'import json,os; print((json.load(open("kit.json")) if os.path.exists("kit.json") else {}).get("dist", "dist"))')
+zip="$dist/$id-$v.zip"
 [ -f "$zip" ] || { echo "build did not produce $zip" >&2; exit 1; }
 git tag -a "$tag" -m "$name $v"
 echo "built $zip ($(stat -f%z "$zip" 2>/dev/null || stat -c%s "$zip") bytes), tagged $tag"

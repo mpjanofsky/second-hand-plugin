@@ -1,15 +1,28 @@
 #!/usr/bin/env python3
 """Checks the Kiosk Satellite rules a script can check (the kit's RULES.md marks them [checked]).
 
+Usage: rules-check.py [--root DIR] [--src DIR ...]. Source folders come from --src, else kit.json "sources", else
+src/. Runs standalone in any plugin repo (the manifest must be at --root).
+
 Prints failures and warnings only; exits 1 on a failure. A line that breaks a rule on purpose carries
 `// ks-rules: allow <rule> <reason>` with the reason written down where the project records its decisions.
 """
 import json, re, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+args, ROOT, src_dirs = sys.argv[1:], Path(__file__).resolve().parents[1], []
+while args:
+    if args[0] == "--root" and len(args) > 1:
+        ROOT, args = Path(args[1]).resolve(), args[2:]
+    elif args[0] == "--src" and len(args) > 1:
+        src_dirs, args = src_dirs + [args[1]], args[2:]
+    else:
+        sys.exit(__doc__)
 manifest = json.loads((ROOT / "kiosk-satellite-plugin.json").read_text())
-sources = {p: p.read_text() for p in sorted((ROOT / "src").rglob("*.java"))}
+if not src_dirs:
+    kit_json = ROOT / "kit.json"
+    src_dirs = json.loads(kit_json.read_text()).get("sources", ["src"]) if kit_json.exists() else ["src"]
+sources = {p: p.read_text() for d in src_dirs for p in sorted((ROOT / d).rglob("*.java"))}
 fails, warns = [], []
 
 
@@ -22,7 +35,8 @@ def lines(pattern, rule):
 
 # Only the SDK: no reflection, no KS internals, no microphone capture.
 lines(r"java\.lang\.reflect|Class\.forName\(|getDeclared(Field|Method|Constructor)|setAccessible\(", "reflection (SDK only)")
-lines(r"\bme\.jxl\.(?!kiosk\.plugins\b)", "KS internal class (SDK only)")
+# The documented Android broadcast actions (me.jxl.kiosk_satellite.event.*/action.*) are a public contract.
+lines(r"\bme\.jxl\.(?!kiosk\.plugins\b|kiosk_satellite\.(event|action)\.)", "KS internal class (SDK only)")
 lines(r"\b(AudioRecord|MediaRecorder)\b", "microphone capture (the SDK excludes it)")
 
 # Own package.
@@ -38,6 +52,9 @@ uses = {
     "entities": r"\.(publishSensor|publishTextSensor|publishBinarySensor|publishSwitch|publishSelect)\(",
     "shizuku": r"\.(executeShizuku|shizukuState)\(",
     "native": r"\.nativeLibraryPath\(",
+    "ha": r"\.(haCall|haSubscribe|haUnsubscribe)\(",
+    "camera": r"\.(openCamera|closeCamera)\(",
+    "barcode": r"\.(scanBarcode|cancelBarcodeScan)\(",
 }
 code = "\n".join(sources.values())
 declared = set(manifest.get("capabilities", []))
@@ -66,6 +83,18 @@ for path, text in sources.items():
     body = text[m.end():i]
     if re.search(r"\bhost\s*\.\s*\w+\(", body) and "ks-rules: allow" not in body:
         warns.append("%s: stop() calls the host; KS has already revoked access (RULES.md Lifecycle)" % path.relative_to(ROOT))
+
+# Icon: Community Plugins refuses a listed icon that is missing or not a 256 by 256 PNG of at most 256 KB.
+icon = manifest.get("icon")
+if icon is not None:
+    path = ROOT / "assets" / str(icon)
+    if not isinstance(icon, str) or not icon.endswith(".png") or ".." in icon or not path.is_file():
+        fails.append("manifest icon must name a PNG under assets/ (got %r)" % icon)
+    else:
+        data = path.read_bytes()
+        size = (int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")) if data[:8] == b"\x89PNG\r\n\x1a\n" else None
+        if size != (256, 256) or len(data) > 256 * 1024:
+            fails.append("assets/%s must be a 256 by 256 PNG of at most 256 KB" % icon)
 
 # README: size and the not-affiliated line.
 readme = ROOT / "README.md"
