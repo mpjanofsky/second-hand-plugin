@@ -28,6 +28,19 @@ final class ClockService {
     private BroadcastReceiver systemReceiver;
     private String address = "";
 
+    /** The status tile: the verdict last reached, whether the tile is on, and what is on the Overview now. */
+    private final Object tileLock = new Object();
+    private String verdictLevel = "";
+    private String verdictText = "";
+    private boolean verdictKnown;
+    private boolean tileShown = true;
+    private boolean tilePublished;
+    private String publishedLevel = "";
+    private String publishedText = "";
+
+    /** The link's state, for the Reconnect button's result. */
+    private final LinkWatch watch = new LinkWatch();
+
     ClockService(PluginHost host) {
         this.host = host;
     }
@@ -37,15 +50,26 @@ final class ClockService {
         stop();
         Object a = settings.get("address");
         address = a == null ? "" : String.valueOf(a).trim();
+        synchronized (tileLock) {
+            verdictKnown = false;   // a new link starts from its own first state
+        }
+        showTile(shownSetting(settings));
+        watch.update(null);
         context = context();
         if (context == null) {
             status("Could not reach Android. See the log.", true);
+            verdict("off", "Could not reach Android. See the log.");
             return;
         }
         adapter = BluetoothAdapter.getDefaultAdapter();
         ClockLink.Listener listener = new ClockLink.Listener() {
             @Override public void onState(ClockLink.State state, String detail) {
                 status(detail, state == ClockLink.State.RETRYING);
+                watch.update(state);
+                // Each retry passes through Connecting; keeping the last verdict stops the tile flicking to gray and back.
+                if (state != ClockLink.State.CONNECTING || !tileHasVerdict()) {
+                    verdict(StatusVerdict.level(state, !address.isEmpty()), detail);
+                }
             }
 
             @Override public void onLog(String message) {
@@ -81,9 +105,79 @@ final class ClockService {
         }
     }
 
-    synchronized void reconnect() {
-        if (link != null) {
-            link.reconnectNow();
+    /** Asks the link to try now. False when there is no link (no Android context). */
+    synchronized boolean reconnect() {
+        if (link == null) {
+            return false;
+        }
+        link.reconnectNow();
+        return true;
+    }
+
+    /** Wakes the link and waits up to {@code millis} for the attempt it starts to end; true when the clock answered. */
+    boolean reconnectAndWait(long millis) throws InterruptedException {
+        return watch.wakeAndWait(new LinkWatch.Wake() {
+            @Override public boolean wake() {
+                return reconnect();
+            }
+        }, millis);
+    }
+
+    private boolean tileHasVerdict() {
+        synchronized (tileLock) {
+            return verdictKnown;
+        }
+    }
+
+    /** The "show status tile" setting; absent means on, the default. */
+    static boolean shownSetting(Map<String, Object> settings) {
+        Object v = settings.get("status_tile");
+        return v == null || Boolean.parseBoolean(String.valueOf(v));
+    }
+
+    /** Turns the Overview tile on or off. Off removes it; on shows the latest verdict again. Never called from stop. */
+    void showTile(boolean shown) {
+        synchronized (tileLock) {
+            tileShown = shown;
+            if (!shown && tilePublished) {
+                tilePublished = false;
+                try {
+                    host.removeStatusTile(StatusVerdict.KEY);
+                } catch (RuntimeException e) {
+                    log("could not remove the status tile: " + e);
+                }
+            } else if (shown && verdictKnown) {
+                publishTile();
+            }
+        }
+    }
+
+    /** Records the link's verdict and puts it on the tile if the tile is on and the verdict changed. Takes only tileLock, because the link thread calls it while stop() waits for that thread. */
+    private void verdict(String level, String text) {
+        synchronized (tileLock) {
+            verdictLevel = level;
+            verdictText = StatusVerdict.text(text);
+            verdictKnown = true;
+            if (tileShown) {
+                publishTile();
+            }
+        }
+    }
+
+    /** Publishes only when the level or text differs from what is on the Overview now. Caller holds tileLock. */
+    private void publishTile() {
+        if (tilePublished && verdictLevel.equals(publishedLevel) && verdictText.equals(publishedText)) {
+            return;
+        }
+        try {
+            host.publishStatusTile(StatusVerdict.KEY, StatusVerdict.TITLE, verdictLevel, verdictText);
+            tilePublished = true;
+            publishedLevel = verdictLevel;
+            publishedText = verdictText;
+        } catch (UnsupportedOperationException | LinkageError olderKiosk) {
+            tileShown = false;   // Kiosk Satellite before status tiles: nothing to show
+        } catch (RuntimeException e) {
+            log("could not publish the status tile: " + e);
         }
     }
 
@@ -99,6 +193,7 @@ final class ClockService {
         }
         if (c == null || b == null || !b.isEnabled()) {
             status("Bluetooth is off or unavailable.", true);
+            verdict("off", "Bluetooth is off or unavailable.");
             return null;
         }
         return new Pairing(c, b, new Pairing.Progress() {
@@ -184,13 +279,28 @@ final class ClockService {
         Map<String, Object> values = new HashMap<String, Object>();
         values.put("address", value);
         try {
-            host.saveSettings(values);
+            try {
+                host.updateSettings(values);   // saves only the address and keeps every other setting
+            } catch (UnsupportedOperationException | LinkageError olderApp) {
+                host.saveSettings(values);     // Kiosk Satellite before 2026.10.30; the address is the only setting
+            }
         } catch (RuntimeException e) {
             log("could not save the address: " + e);
         }
     }
 
+    /** Where a settings-button run hears progress; null when none is running. */
+    private volatile SetupReporter reporter;
+
+    void reporter(SetupReporter value) {
+        reporter = value;
+    }
+
     private void status(String message, boolean error) {
+        SetupReporter r = reporter;
+        if (r != null && !error) {
+            r.progress(message.startsWith(Pairing.HINT) ? message.substring(Pairing.HINT.length()) : message);
+        }
         try {
             host.status(message, error);
         } catch (RuntimeException ignored) {

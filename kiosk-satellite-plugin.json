@@ -2,9 +2,10 @@
   "schemaVersion": 1,
   "id": "echo-wall-clock-plugin",
   "name": "Second Hand",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "apiVersion": 1,
   "minAndroidSdk": 24,
+  "minAppVersion": "2026.10.30",
   "entryClass": "io.github.mpjanofsky.kiosk.secondhandplugin.SecondHandPlugin",
   "description": "Second Hand shows your kiosk's own voice timers on a Bluetooth wall clock, and keeps the clock's time right.",
   "author": "Mike Janofsky",
@@ -17,8 +18,21 @@
       "type": "string",
       "title": "Clock address",
       "default": "",
-      "description": "Filled in by Pair clock. Use Forget clock to pair another clock."
+      "description": "Filled in by Pair clock and cleared by Forget clock.",
+      "group": "Clock"
+    },
+    {
+      "key": "status_tile",
+      "type": "boolean",
+      "title": "Show status tile",
+      "default": true,
+      "description": "Shows Second Hand's status on the Remote Admin Overview.",
+      "group": "Status"
     }
+  ],
+  "groups": [
+    { "title": "Clock" },
+    { "title": "Status" }
   ],
   "commands": [
     {
@@ -32,6 +46,45 @@
     {
       "id": "forget",
       "title": "Forget clock"
+    }
+  ],
+  "buttons": [
+    {
+      "id": "pair",
+      "title": "Pair clock",
+      "label": "Pair",
+      "group": "Clock",
+      "confirm": {
+        "title": "Pair the clock?",
+        "message": "Hold the clock's button until its light pulses orange first.",
+        "confirmLabel": "Pair"
+      }
+    },
+    {
+      "id": "reconnect",
+      "title": "Reconnect to clock",
+      "label": "Reconnect",
+      "group": "Clock",
+      "visibleWhen": {
+        "key": "address",
+        "notEmpty": true
+      }
+    },
+    {
+      "id": "forget",
+      "title": "Forget clock",
+      "label": "Forget",
+      "group": "Clock",
+      "description": "Unpairs the clock so another can be paired.",
+      "visibleWhen": {
+        "key": "address",
+        "notEmpty": true
+      },
+      "confirm": {
+        "title": "Forget the clock?",
+        "message": "Pair the clock again to use it.",
+        "confirmLabel": "Forget"
+      }
     }
   ]
 }

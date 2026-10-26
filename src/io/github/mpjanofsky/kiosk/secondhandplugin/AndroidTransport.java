@@ -41,10 +41,10 @@ final class AndroidTransport implements ClockTransport {
                 return "Bluetooth is off.";
             }
             if (address.isEmpty() || !BluetoothAdapter.checkBluetoothAddress(address)) {
-                return "No clock paired yet. Run Pair clock.";
+                return "No clock paired yet.";
             }
             if (adapter.getRemoteDevice(address).getBondState() != BluetoothDevice.BOND_BONDED) {
-                return "The clock is not paired. Run Pair clock.";
+                return "The clock is no longer paired.";
             }
             return null;
         } catch (SecurityException e) {

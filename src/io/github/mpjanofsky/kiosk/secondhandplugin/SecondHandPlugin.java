@@ -14,6 +14,9 @@ import me.jxl.kiosk.plugins.PluginHost;
  * thread and return (they must finish within 3 s); the Bluetooth work never runs inside a callback.
  */
 public final class SecondHandPlugin implements KioskPlugin {
+    /** The longest Reconnect waits for its connect attempt to end; well inside the setup run's 60 s silence limit. */
+    static final long RECONNECT_WAIT_MS = 15000;
+
     private PluginHost host;
     private ClockService service;
     private ExecutorService worker;
@@ -37,6 +40,15 @@ public final class SecondHandPlugin implements KioskPlugin {
         // Saving the address after pairing comes back here; only restart when something that matters changed.
         if (!same(settings, applied)) {
             apply(settings);
+        } else if (ClockService.shownSetting(settings) != ClockService.shownSetting(applied)) {
+            // The tile follows its own setting without restarting the link.
+            final boolean shown = ClockService.shownSetting(settings);
+            applied = new HashMap<String, Object>(settings);
+            run(new Runnable() {
+                @Override public void run() {
+                    service.showTile(shown);
+                }
+            });
         }
     }
 
@@ -55,40 +67,75 @@ public final class SecondHandPlugin implements KioskPlugin {
     }
 
     @Override public void execute(final String command, Map<String, Object> arguments) {
-        if (!"pair".equals(command) && !"reconnect".equals(command) && !"forget".equals(command)) {
+        if (!isCommand(command)) {
             throw new IllegalArgumentException("Unknown command: " + command);
         }
         run(new Runnable() {
             @Override public void run() {
-                try {
-                    if ("pair".equals(command)) {
-                        String address = service.pair();
-                        if (address != null) {
-                            Map<String, Object> next = new HashMap<String, Object>(applied);
-                            next.put("address", address);
-                            applied = next;             // before saving, so the configure() that follows is not a change
-                            service.saveAddress(address);
-                            service.start(next);
-                        }
-                    } else if ("forget".equals(command)) {
-                        boolean ok = service.forget();
-                        host.status(ok ? "The clock is unpaired." : "Could not unpair the clock.", !ok);
-                        Map<String, Object> next = new HashMap<String, Object>(applied);
-                        next.put("address", "");
-                        applied = next;
-                        service.saveAddress("");
-                        service.start(next);
-                    } else {
-                        service.reconnect();
-                    }
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                } catch (RuntimeException e) {
-                    host.log(command + " failed: " + e);
-                    host.status("The " + command + " action failed. See the log.", true);
-                }
+                perform(command, null);
             }
         });
+    }
+
+    private static boolean isCommand(String command) {
+        return "pair".equals(command) || "reconnect".equals(command) || "forget".equals(command);
+    }
+
+    /** The settings page's Pair, Reconnect and Forget buttons: the same actions as the commands, with progress under the row. */
+    private void onButton(Map<String, Object> payload) {
+        final Object id = payload.get("id");
+        final Object run = payload.get("run");
+        if (!(id instanceof String) || !isCommand((String) id) || !(run instanceof String)) {
+            return;
+        }
+        run(new Runnable() {
+            @Override public void run() {
+                perform((String) id, (String) run);
+            }
+        });
+    }
+
+    /** Runs one action on the worker. {@code setupRun} is the settings button's run, or null for a command. */
+    private void perform(String command, String setupRun) {
+        SetupReporter reporter = new SetupReporter(host, setupRun);
+        service.reporter(reporter);
+        try {
+            if ("pair".equals(command)) {
+                String address = service.pair();
+                if (address != null) {
+                    Map<String, Object> next = new HashMap<String, Object>(applied);
+                    next.put("address", address);
+                    applied = next;             // before saving, so the configure() that follows is not a change
+                    service.saveAddress(address);
+                    service.start(next);
+                    reporter.finish(true, "Paired. The plugin is connecting to the clock.");
+                } else {
+                    reporter.finish(false, "Pairing did not finish.");
+                }
+            } else if ("forget".equals(command)) {
+                boolean ok = service.forget();
+                host.status(ok ? "The clock is unpaired." : "Could not unpair the clock.", !ok);
+                Map<String, Object> next = new HashMap<String, Object>(applied);
+                next.put("address", "");
+                applied = next;
+                service.saveAddress("");
+                service.start(next);
+                reporter.finish(ok, ok ? "The clock is unpaired." : "Could not unpair the clock.");
+            } else {
+                reporter.progress("Connecting to the clock...");
+                boolean up = service.reconnectAndWait(RECONNECT_WAIT_MS);
+                reporter.finish(up, up ? "Connected to the clock." : "Could not connect to the clock.");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (RuntimeException e) {
+            host.log(command + " failed: " + e);
+            host.status("The " + command + " action failed. See the log.", true);
+            reporter.finish(false, "The " + command + " action failed. See the log.");
+        } finally {
+            service.reporter(null);
+            reporter.close();
+        }
     }
 
     private void run(Runnable task) {
@@ -99,7 +146,12 @@ public final class SecondHandPlugin implements KioskPlugin {
         }
     }
 
-    @Override public void onEvent(String event, Map<String, Object> payload) {}
+    @Override public void onEvent(String event, Map<String, Object> payload) {
+        if ("settings.button".equals(event)) {
+            onButton(payload);
+        }
+        // settings.cancel needs no answer: setupResult tells a finished run so, and pairing ends by itself.
+    }
 
     @Override public void stop() {
         if (worker != null) {

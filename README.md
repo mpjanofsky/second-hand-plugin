@@ -32,11 +32,21 @@ Second Hand follows the timers of **the kiosk it runs on**. One kiosk, one clock
 
 | | |
 |---|---|
-| **You need** | An Echo Wall Clock (the Mickey Mouse Edition is reported to work too: confirmed with Second Hand for Home Assistant, not yet tried with this plugin), and a kiosk running Kiosk Satellite 2026.10.22 or newer with Bluetooth turned on and a Voice Satellite configured. |
+| **You need** | An Echo Wall Clock (the Mickey Mouse Edition is reported to work too: confirmed with Second Hand for Home Assistant, not yet tried with this plugin), and a kiosk running Kiosk Satellite 2026.10.30 or newer with Bluetooth turned on and a Voice Satellite configured. |
 | **Tested on** | An Echo Show 5 running LineageOS 18.1 (Android 11) |
 | **Should work on** | Other Kiosk Satellite kiosks with Bluetooth |
 
 ## 🚀 Install
+
+### Community Plugins (Recommended)
+
+Second Hand is listed in [Community Plugins](https://kiosksatellite.com/plugins/). Use the button below to open it in your Kiosk Satellite and install it.
+
+[![Install in Kiosk Satellite](https://kiosksatellite.com/img/badges/plugin-add.svg)](https://kiosksatellite.com/redirect/plugin/?repository=mpjanofsky/second-hand-plugin)
+
+Or search for `Second Hand` in **Settings > Plugin Manager > Browse plugins** in Kiosk Satellite.
+
+### Manual
 
 1. In Kiosk Satellite, open **Settings > Plugin Manager** (or **Plugin Manager** in Remote Admin) and turn on **Enable Plugins**.
 2. Choose **Add plugin**, paste `https://github.com/mpjanofsky/second-hand-plugin`, and choose **Preview**.
@@ -45,28 +55,34 @@ Second Hand follows the timers of **the kiosk it runs on**. One kiosk, one clock
 
 ## 🕰️ Set up your clock
 
-Pairing needs you at the kiosk and the clock. You can do step 1 from Remote Admin.
+Pairing needs you at the kiosk and the clock. You can start it from Remote Admin.
 
-1. In Plugin Manager, tap Second Hand's row to open its page. Open the **Pair clock** action and turn on **Show in kiosk drawer**. (You can also run it with a gesture or a Home Assistant button.)
-2. Open the kiosk drawer and tap **Pair clock**.
-3. Press and hold the blue pairing button on the back of the clock (up to 10 seconds) until the light on the front pulses orange. That is pairing mode. Keep it pulsing: Second Hand looks for the clock for 90 seconds.
-4. When Android asks to pair, choose **Pair** on the kiosk.
+1. In Plugin Manager, tap Second Hand's row to open its page. Press **Pair**, in Remote Admin or on the kiosk.
+2. Press and hold the blue pairing button on the back of the clock (up to 10 seconds) until the light on the front pulses orange. That is pairing mode. Keep it pulsing: Second Hand looks for the clock for 90 seconds, and the page shows its progress.
+3. When Android asks to pair, choose **Pair** on the kiosk. If it asks for a PIN instead, type `0000`.
 
 Open the plugin's row in Plugin Manager to check the status. It should say **Connected to the clock.** Start a voice timer and it shows on the clock.
 
-An Echo Wall Clock connects to one device at a time. Pairing it with Second Hand disconnects it from whatever it was paired with before. To give it back, run **Forget clock**.
+An Echo Wall Clock connects to one device at a time. Pairing it with Second Hand disconnects it from whatever it was paired with before. To give it back, press **Forget**.
 
 ## ⚙️ Settings
 
-The one setting, **Clock address**, fills in when you pair. Use **Forget clock** to pair a different clock.
+Three buttons at the top set the clock up, with progress shown under each button:
 
-Actions you can show in the kiosk drawer, give a gesture, or expose to Home Assistant:
-
-| Action | What it does |
+| Button | What it does |
 |---|---|
-| **Pair clock** | Finds the clock while it is in pairing mode (light pulsing orange) and pairs with it. |
-| **Reconnect to clock** | Tries to connect now instead of waiting. |
-| **Forget clock** | Removes the pairing so the clock can be paired with something else. |
+| **Pair** | Finds the clock while it is in pairing mode (light pulsing orange) and pairs with it. |
+| **Reconnect** | Tries to connect now instead of waiting for the next automatic try, then says whether the clock answered. |
+| **Forget** | Removes the pairing so the clock can be paired with something else. |
+
+The buttons need Kiosk Satellite 2026.10.30 or later.
+
+| Setting | What it does |
+|---|---|
+| **Clock address** | Fills in when you pair and clears when you forget the clock. |
+| **Show status tile** | Shows Second Hand's status on the Remote Admin Overview: green when connected, amber while retrying, red when Bluetooth is off or the pairing is gone. On by default. |
+
+**Deprecated:** the **Pair clock**, **Reconnect to clock** and **Forget clock** actions, which you could show in the kiosk drawer, give a gesture or expose to Home Assistant, still work in this release. They will be removed in a later release, so use the buttons instead.
 
 ## 🔒 Privacy
 
@@ -78,9 +94,9 @@ The status line shows in the plugin's row in Plugin Manager, on the kiosk or in 
 
 | What you see | What to try |
 |---|---|
-| **No clock paired yet** or **The clock is not paired** | Run **Pair clock** with the clock in pairing mode. |
-| **The clock was not found** | Run **Pair clock** again, and keep the clock in pairing mode (light pulsing orange) the whole time. |
-| **Clock not reachable** or **Clock still not reachable** | Check the clock has batteries and is in range, and that nothing else has taken the pairing. Right after pairing, the first connection can take a few minutes and Second Hand keeps trying on its own. To try now, run **Reconnect to clock**. |
+| **No clock paired yet** or **The clock is no longer paired** | Press **Pair** with the clock in pairing mode. |
+| **The clock was not found** | Press **Pair** again, and keep the clock in pairing mode (light pulsing orange) the whole time. |
+| **Clock not reachable** or **Clock still not reachable** | Check the clock has batteries and is in range, and that nothing else has taken the pairing. Right after pairing, the first connection can take a few minutes and Second Hand keeps trying on its own. To try now, press **Reconnect**. |
 | The clock stays blank | Say a timer out loud to the kiosk itself. Second Hand only shows the kiosk's own timers. |
 
 ## 🙏 Credits

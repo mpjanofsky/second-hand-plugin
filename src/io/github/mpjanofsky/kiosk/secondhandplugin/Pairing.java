@@ -29,6 +29,9 @@ final class Pairing {
         return false;
     }
 
+    /** The line before the search text. The status line carries it; the Pair row's progress drops it, as the confirm said it. */
+    static final String HINT = "Hold the clock's button until its light pulses orange. ";
+
     interface Progress {
         /** Shown on the plugin's status line and logged. */
         void say(String message);
@@ -88,14 +91,14 @@ final class Pairing {
                             foundAddress = device.getAddress();
                         } else {
                             seen++;
-                            progress.say("Hold the clock's button until its light pulses orange. Looking for the clock... ("
+                            progress.say(HINT + "Looking for the clock... ("
                                     + seen + (seen == 1 ? " other device" : " other devices") + " seen so far.)");
                         }
                     } else if (BluetoothDevice.ACTION_PAIRING_REQUEST.equals(action)) {
                         int variant = i.getIntExtra(EXTRA_VARIANT, -1);
                         progress.log("pairing prompt, variant " + variant);
                         if (variant == 0 || variant == 1) {
-                            progress.say("The clock asks for a PIN. Type it on the prompt on this screen.");
+                            progress.say("The clock asks for a PIN. Type 0000 on the prompt on this screen.");
                         }
                     } else if (BluetoothDevice.ACTION_BOND_STATE_CHANGED.equals(action)
                             && device.getAddress().equalsIgnoreCase(foundAddress)) {
@@ -118,7 +121,7 @@ final class Pairing {
             context.registerReceiver(receiver, filter);
         }
         try {
-            progress.say("Hold the clock's button until its light pulses orange. Looking for the clock...");
+            progress.say(HINT + "Looking for the clock...");
             adapter.startDiscovery();
             long end = System.currentTimeMillis() + 90000;
             synchronized (lock) {
@@ -151,7 +154,7 @@ final class Pairing {
                 }
             }
             if (clock.getBondState() != BluetoothDevice.BOND_BONDED) {
-                progress.say("Pairing did not finish. Tap Pair on the prompt within a minute, then try again.");
+                progress.say("Pairing did not finish.");
                 return null;
             }
             progress.say("Paired.");
