@@ -86,7 +86,7 @@ The buttons need Kiosk Satellite 2026.10.30 or later.
 
 ## 🔒 Privacy
 
-Everything stays on the kiosk. Second Hand reads the kiosk's timer events and talks to the clock over Bluetooth. It doesn't use the internet and sends nothing about you or your kiosk anywhere. The clock's Bluetooth address is saved in the plugin's settings on the kiosk.
+Everything stays on the kiosk. Second Hand reads the kiosk's timer events and talks to the clock over Bluetooth. It doesn't use the internet and sends nothing about you or your kiosk anywhere. The clock's Bluetooth address is saved in the plugin's settings on the kiosk. Kiosk Satellite shares its timer events with every app on the kiosk, and on Android 14 and later other apps can also send timer events to Second Hand, so only install apps you trust on the kiosk.
 
 ## 🧰 Troubleshooting
 

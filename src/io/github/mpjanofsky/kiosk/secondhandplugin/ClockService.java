@@ -234,7 +234,14 @@ final class ClockService {
         for (TimerEvent.Type t : TimerEvent.Type.values()) {
             filter.addAction(TimerEvent.ACTION_PREFIX + t.name());
         }
-        if (Build.VERSION.SDK_INT >= 33) {
+        // Kiosk Satellite sends these as implicit broadcasts (no package, no permission) so Tasker and the like get
+        // them too. From Android 14 an implicit intent only reaches exported receivers, even inside the sending app,
+        // so a not-exported receiver heard nothing there (issue #1). Exported means any app on the kiosk can send a
+        // fake timer, as it always could before Android 13 (no flag meant exported); TimerEvent and ClockRules bound
+        // what such a broadcast can do: known actions only, a short id, at most 24 h, a capped number of timers.
+        if (Build.VERSION.SDK_INT >= 34) {
+            context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+        } else if (Build.VERSION.SDK_INT >= 33) {
             context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
             context.registerReceiver(receiver, filter);
@@ -261,7 +268,9 @@ final class ClockService {
         };
         IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
-        // System broadcasts: delivered whatever the export flag, which only matters for other apps' broadcasts.
+        // Protected system broadcasts only (other apps cannot send them), so Android allows registering without a
+        // flag, and the Android 14 implicit-intent rule does not apply: it covers app-sent intents. ACL_CONNECTED
+        // comes from the Bluetooth app, which a not-exported receiver would miss, so no flag is the right choice.
         context.registerReceiver(systemReceiver, filter);
     }
 

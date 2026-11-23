@@ -34,6 +34,11 @@ public final class ClockRules {
     /** A ringing timer nobody stopped is forgotten after this long. */
     static final long RINGING_MS = 10 * 60 * 1000;
     private static final long HALF_HOUR_MS = 30 * 60 * 1000;
+    /**
+     * Most timers tracked at once. The clock shows four; this leaves room for real use and keeps memory bounded when
+     * another app floods the (exported, from Android 14) timer receiver with made-up ids.
+     */
+    static final int MAX_TIMERS = 16;
 
     private TimeZone zone;
     private boolean connected;
@@ -104,7 +109,9 @@ public final class ClockRules {
                 }
                 break;
             case FINISHED:
-                running.remove(id);
+                if (running.remove(id) == null && isFull(id)) {
+                    break;
+                }
                 ringDue.put(id, now + RING_DELAY_MS);
                 break;
             case DISMISSED:
@@ -161,11 +168,22 @@ public final class ClockRules {
     }
 
     private void start(String id, TimerEvent e, long now, List<ClockCommand> out) {
+        if (isFull(id)) {
+            return;
+        }
         long end = now + e.secondsLeft * 1000L;
         running.put(id, end);
         ringDue.remove(id);
         ringing.remove(id);
         out.add(setAlert(id, end));
+    }
+
+    /** True when {@code id} is new and {@link #MAX_TIMERS} are already tracked. */
+    private boolean isFull(String id) {
+        if (running.containsKey(id) || ringDue.containsKey(id) || ringing.containsKey(id)) {
+            return false;
+        }
+        return running.size() + ringDue.size() + ringing.size() >= MAX_TIMERS;
     }
 
     private void delete(String id, List<ClockCommand> out) {

@@ -33,6 +33,7 @@ public final class ClockRulesTest {
         staleTimersAreForgotten();
         unknownEventsAreIgnored();
         broadcastParsing();
+        floodIsBounded();
         System.out.println("ClockRulesTest ok");
     }
 
@@ -239,5 +240,24 @@ public final class ClockRulesTest {
         assert e.secondsLeft == 0 && !e.active;
         assert TimerEvent.fromBroadcast(p + "STARTED", "id1", Long.valueOf(-5), Boolean.TRUE).secondsLeft == 0;
         assert TimerEvent.fromBroadcast(p + "STARTED", "id1", Long.valueOf(99999999999L), Boolean.TRUE).secondsLeft == 86400;
+        // The receiver is exported from Android 14 (issue #1): an id far longer than KS's 26 characters is refused.
+        String longest = new String(new char[TimerEvent.MAX_ID_LENGTH]).replace('\0', 'x');
+        assert TimerEvent.fromBroadcast(p + "STARTED", longest, 60, true) != null;
+        assert TimerEvent.fromBroadcast(p + "STARTED", longest + "x", 60, true) == null;
+    }
+
+    /** Another app flooding made-up timers (synthetic): tracking stops at MAX_TIMERS; known timers still work. */
+    private static void floodIsBounded() {
+        ClockRules r = connected();
+        r.onTimer(ev(TimerEvent.Type.STARTED, A, 600, true), T0);
+        for (int i = 0; r.runningCount() < ClockRules.MAX_TIMERS; i++) {
+            r.onTimer(ev(TimerEvent.Type.STARTED, "fake" + i, 600, true), T0);
+        }
+        is(r.onTimer(ev(TimerEvent.Type.STARTED, "one-more", 600, true), T0));            // full: ignored
+        is(r.onTimer(ev(TimerEvent.Type.FINISHED, "unknown", 0, false), T0));             // full: not tracked to ring
+        assert r.runningCount() == ClockRules.MAX_TIMERS;
+        is(r.onTimer(ev(TimerEvent.Type.UPDATED, A, 300, true), T0 + 1000), "SetAlert TIMER");   // a known timer still updates
+        is(r.onTimer(ev(TimerEvent.Type.CANCELLED, A, 0, false), T0 + 2000), "DeleteAlert");
+        is(r.onTimer(ev(TimerEvent.Type.STARTED, B, 60, true), T0 + 3000), "SetAlert TIMER");    // room again
     }
 }

@@ -13,6 +13,9 @@ public final class TimerEvent {
     /** Prefix of Kiosk Satellite's timer broadcasts; the suffix is the {@link Type} name. */
     public static final String ACTION_PREFIX = "me.jxl.kiosk_satellite.event.VS_TIMER_"; // ks-rules: allow sdk-only documented Android broadcast (android-broadcasts.md), a string not a KS class
 
+    /** Longest timer id accepted. Kiosk Satellite's are 26 characters; anything far longer is not from it. */
+    public static final int MAX_ID_LENGTH = 64;
+
     /**
      * Reads a broadcast's action and extras, as they come out of the intent bundle. Kiosk Satellite sends numbers as
      * numbers and booleans as booleans, but a number or flag that arrives as text is read too, so a started timer is
@@ -23,7 +26,7 @@ public final class TimerEvent {
             return null;
         }
         String id = String.valueOf(timerId);
-        if (id.isEmpty()) {
+        if (id.isEmpty() || id.length() > MAX_ID_LENGTH) {   // KS ids are 26-character ULIDs; the receiver is exported
             return null;
         }
         Type type;

@@ -48,3 +48,9 @@ adb shell am broadcast -a me.jxl.kiosk_satellite.event.VS_TIMER_STARTED \
 ```
 
   The other actions are `VS_TIMER_UPDATED` (paused when `is_active` is false), `VS_TIMER_CANCELLED`, `VS_TIMER_FINISHED` and `VS_TIMER_DISMISSED`.
+
+  This works because the receiver accepts broadcasts from other apps. Kiosk Satellite sends its timer broadcasts
+  implicitly (no package, no permission), and from Android 14 an implicit broadcast only reaches an exported receiver,
+  even inside Kiosk Satellite itself (issue #1). So on Android 14 and later the receiver is exported; on Android 13 it
+  is not, and this `adb` command does nothing there; before 13 it was always open. Because any app can send one,
+  `TimerEvent` accepts only the five actions and ids up to 64 characters, and `ClockRules` tracks at most 16 timers.
